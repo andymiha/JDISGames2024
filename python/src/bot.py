@@ -18,7 +18,9 @@ class MyBot:
      name : str
      
      def __init__(self):
-          self.name = "Bourré"
+          self.name = "CaBourré"
+          self.pos_player = None
+          self.walls = []
 
 
      def on_tick(self, game_state: GameState) -> List[Union[MoveAction, SwitchWeaponAction, RotateBladeAction, ShootAction, SaveAction]]:
@@ -72,19 +74,35 @@ class MyBot:
                                         (en): The state of the game.   
           """
           print(f"Current tick: {game_state.current_tick}")
-        
+          print(self.walls)
+          # Get new position
+          new_pos = self.find_player_coordinates(game_state.players, self.name)
+
           # Find the closest coin
           closest_coin = self.coin_finder(game_state, self.name)
           if closest_coin:
                print(f"Moving towards coin at position ({closest_coin.pos.x}, {closest_coin.pos.y})")
                x_dest, y_dest = closest_coin.pos.x, closest_coin.pos.y
 
+          if new_pos == self.pos_player:
+               print("Here")
+               if new_pos.x % 10 <= 1:
+                    new_wall = {"x": math.floor(new_pos.x), "y_bottom": math.floor(new_pos.y / 10) * 10, "y_top": math.ceil(new_pos.y / 10) * 10}
+               elif new_pos.x % 10 >= 9:
+                    new_wall = {"x": math.ceil(new_pos.x), "y_bottom": math.floor(new_pos.y / 10) * 10, "y_top": math.ceil(new_pos.y / 10) * 10}
+               elif new_pos.y & 10 <= 1:
+                    new_wall = {"y": math.floor(new_pos.x), "x_left": math.floor(new_pos.x / 10) * 10, "x_right": math.ceil(new_pos.x / 10) * 10}
+               elif new_pos.y % 10 >= 9:
+                    new_wall = {"y": math.ceil(new_pos.y), "x_left": math.floor(new_pos.x / 10) * 10, "x_right": math.ceil(new_pos.x / 10) * 10}    
+               self.wall.append(new_wall)
+
+          self.pos_player = new_pos
 
           actions = [
                MoveAction((x_dest, y_dest)),
                ShootAction((11.2222, 13.547)),
                SwitchWeaponAction(PlayerWeapon.PlayerWeaponBlade),
-               SaveAction(b"Hello World"),
+               # SaveAction(),
           ]
                     
           return actions
