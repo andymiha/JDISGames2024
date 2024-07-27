@@ -1,5 +1,5 @@
 from typing import List, Union
-
+import math
 from core.action import MoveAction, ShootAction, RotateBladeAction, SwitchWeaponAction, SaveAction
 from core.consts import Consts
 from core.game_state import GameState, PlayerWeapon, Point
@@ -72,9 +72,16 @@ class MyBot:
                                         (en): The state of the game.   
           """
           print(f"Current tick: {game_state.current_tick}")
+        
+          # Find the closest coin
+          closest_coin = self.coin_finder(game_state, self.name)
+          if closest_coin:
+               print(f"Moving towards coin at position ({closest_coin.pos.x}, {closest_coin.pos.y})")
+               x_dest, y_dest = closest_coin.pos.x, closest_coin.pos.y
+
 
           actions = [
-               MoveAction((10.0, 11.34)),
+               MoveAction((x_dest, y_dest)),
                ShootAction((11.2222, 13.547)),
                SwitchWeaponAction(PlayerWeapon.PlayerWeaponBlade),
                SaveAction(b"Hello World"),
@@ -110,16 +117,23 @@ class MyBot:
           """ add a save call when the game is over to store our bytes to the server """
           pass
      
-     def find_player_coordinates(players, player_name):
+     def find_player_coordinates(self, players, player_name):
           for player in players:
                if player['name'] == player_name:
                     return player['position']
           return None  # If player is not found
 
-     def coin_finder(self, coins, self_name, players):
-          dist_max = float('inf')
-          pos_self = find_player_coordinates(players, self_name)
-          for coin in coins:
-               dist = coin.position
+     def coin_finder(self, state, self_name):
+          closest_coin = None
+          dist_min = float('inf')
+          pos_self = self.find_player_coordinates(state.players, self_name)
+          for coin in state.coins:
+               dist = self.calculate_distance(pos_self, coin.position)
+               if dist < dist_min:
+                    dist_min = dist
+                    closest_coin = coin
+          return closest_coin
 
+     def calculate_distance(self, pos1: Point, pos2: Point) -> float:
+        return math.sqrt((pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2)
         
