@@ -104,6 +104,7 @@ class MyBot:
           
           actions = []
 
+          print(self.weapon_set)
           if not self.weapon_set:
             actions.append(SwitchWeaponAction(PlayerWeapon.PlayerWeaponCanon))
             self.weapon_set = True
@@ -113,7 +114,6 @@ class MyBot:
           if closest_coin:
                print(f"Moving towards coin at position ({closest_coin.pos.x}, {closest_coin.pos.y})")
                x_dest, y_dest = closest_coin.pos.x, closest_coin.pos.y
-               actions.append(MoveAction((x_dest, y_dest)))
 
           """ rotate_action = self.rotate_blade()
           actions.append(rotate_action) """
@@ -121,8 +121,7 @@ class MyBot:
           shoot_action = self.pistol_aimer(game_state)
           if shoot_action:
                actions.append(shoot_action)
-               actions.append(MoveAction(shoot_action.target_pos))
-
+               # actions.append(MoveAction(shoot_action.target_pos))
           if self.pos_player and new_pos.x == self.pos_player.x and new_pos.y == self.pos_player.y:
                new_wall = None
                if new_pos.x % 10 <= 1:
