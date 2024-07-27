@@ -1,3 +1,4 @@
+import random
 from typing import List, Union
 import math
 from core.action import MoveAction, ShootAction, RotateBladeAction, SwitchWeaponAction, SaveAction
@@ -20,7 +21,10 @@ class MyBot:
      def __init__(self):
           self.name = "CaBourré"
           self.pos_player = None
-          self.walls = []
+          self.walls = set()
+          self.dodge = False
+          self.temp_x = None
+          self.temp_y = None
 
 
      def on_tick(self, game_state: GameState) -> List[Union[MoveAction, SwitchWeaponAction, RotateBladeAction, ShootAction, SaveAction]]:
@@ -84,19 +88,34 @@ class MyBot:
                print(f"Moving towards coin at position ({closest_coin.pos.x}, {closest_coin.pos.y})")
                x_dest, y_dest = closest_coin.pos.x, closest_coin.pos.y
 
-          if new_pos == self.pos_player:
-               print("Here")
+          if self.pos_player and new_pos.x == self.pos_player.x and new_pos.y == self.pos_player.y:
+               new_wall = None
                if new_pos.x % 10 <= 1:
                     new_wall = {"x": math.floor(new_pos.x), "y_bottom": math.floor(new_pos.y / 10) * 10, "y_top": math.ceil(new_pos.y / 10) * 10}
                elif new_pos.x % 10 >= 9:
                     new_wall = {"x": math.ceil(new_pos.x), "y_bottom": math.floor(new_pos.y / 10) * 10, "y_top": math.ceil(new_pos.y / 10) * 10}
-               elif new_pos.y & 10 <= 1:
+               elif new_pos.y % 10 <= 1:
                     new_wall = {"y": math.floor(new_pos.x), "x_left": math.floor(new_pos.x / 10) * 10, "x_right": math.ceil(new_pos.x / 10) * 10}
                elif new_pos.y % 10 >= 9:
                     new_wall = {"y": math.ceil(new_pos.y), "x_left": math.floor(new_pos.x / 10) * 10, "x_right": math.ceil(new_pos.x / 10) * 10}    
-               self.wall.append(new_wall)
 
+               if new_wall:
+                    wall_tuple = tuple(new_wall.items())
+                    if wall_tuple not in self.walls:
+                         self.walls.add(wall_tuple)
+                    self.dodge = True 
+                    self.temp_x, self.temp_y = self.generate_new_coords(new_pos.x, new_pos.y)
+
+          
           self.pos_player = new_pos
+
+          if self.are_coordinates_close(self.temp_x, self.temp_y, new_pos.x, new_pos.y):
+               self.dodge = False
+
+
+          if self.dodge:
+               x_dest = self.temp_x
+               y_dest = self.temp_y
 
           actions = [
                MoveAction((x_dest, y_dest)),
@@ -154,4 +173,33 @@ class MyBot:
 
      def calculate_distance(self, pos1: Point, pos2: Point) -> float:
         return math.sqrt((pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2)
+     
+     def generate_new_coords(self, old_x, old_y, delta=10):
+          new_x = old_x + random.uniform(-delta, delta)
+          new_y = old_y + random.uniform(-delta, delta)
+          while self.is_wall_in_between(old_x, old_y, new_x, new_y):
+               new_x = old_x + random.uniform(-delta, delta)
+               new_y = old_y + random.uniform(-delta, delta)
+          return new_x, new_y
+     
+     def are_coordinates_close(self, temp_x, temp_y, new_pos_x, new_pos_y, tolerance=1):
+          distance = math.sqrt((temp_x - new_pos_x) ** 2 + (temp_y - new_pos_y) ** 2)
+          return distance <= tolerance
+     
+     def is_wall_in_between(self, old_x, old_y, new_x, new_y):
+        for wall in self.walls:
+            wall_dict = dict(wall)
+            if 'x' in wall_dict:
+                wall_x = wall_dict['x']
+                y_bottom = wall_dict['y_bottom']
+                y_top = wall_dict['y_top']
+                if min(old_x, new_x) <= wall_x <= max(old_x, new_x) and min(old_y, new_y) <= y_top and max(old_y, new_y) >= y_bottom:
+                    return True
+            if 'y' in wall_dict:
+                wall_y = wall_dict['y']
+                x_left = wall_dict['x_left']
+                x_right = wall_dict['x_right']
+                if min(old_y, new_y) <= wall_y <= max(old_y, new_y) and min(old_x, new_x) <= x_right and max(old_x, new_x) >= x_left:
+                    return True
+        return False
         
