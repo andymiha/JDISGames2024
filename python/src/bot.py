@@ -119,8 +119,8 @@ class MyBot:
      
      def find_player_coordinates(self, players, player_name):
           for player in players:
-               if player['name'] == player_name:
-                    return player['position']
+               if player.name == player_name:
+                    return player.pos
           return None  # If player is not found
 
      def coin_finder(self, state, self_name):
@@ -128,7 +128,7 @@ class MyBot:
           dist_min = float('inf')
           pos_self = self.find_player_coordinates(state.players, self_name)
           for coin in state.coins:
-               dist = self.calculate_distance(pos_self, coin.position)
+               dist = self.calculate_distance(pos_self, coin.pos)
                if dist < dist_min:
                     dist_min = dist
                     closest_coin = coin
