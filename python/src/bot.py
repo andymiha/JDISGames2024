@@ -110,8 +110,16 @@ class MyBot:
           """ add a save call when the game is over to store our bytes to the server """
           pass
      
-     def coin_finder(self, coins):
+     def find_player_coordinates(players, player_name):
+          for player in players:
+               if player['name'] == player_name:
+                    return player['position']
+          return None  # If player is not found
+
+     def coin_finder(self, coins, self_name, players):
+          dist_max = float('inf')
+          pos_self = find_player_coordinates(players, self_name)
           for coin in coins:
-               coin.position
+               dist = coin.position
 
         
