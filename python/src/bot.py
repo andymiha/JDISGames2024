@@ -1,3 +1,4 @@
+import random
 from typing import List, Union
 import math
 import json
@@ -22,7 +23,26 @@ class MyBot:
      weapon_set: bool
      
      def __init__(self):
-          self.name = "CaBourré"
+          self.name = "CaCaBourré"
+          self.pos_player = None
+          self.walls = set()
+          self.dodge = False
+          self.temp_x = None
+          self.temp_y = None
+          # Define the border walls
+          border_walls = [
+               # Bottom border
+               {('y', 0), ('x_left', 0), ('x_right', 100)},
+               # Top border
+               {('y', 100), ('x_left', 0), ('x_right', 100)},
+               # Left border
+               {('x', 0), ('y_bottom', 0), ('y_top', 100)},
+               # Right border
+               {('x', 100), ('y_bottom', 0), ('y_top', 100)}
+          ]
+          # Add the border walls to the set
+          for wall in border_walls:
+               self.walls.add(tuple(wall))
           self.blade_rotation_angle = 0.0
           self.weapon_set = False
 
@@ -78,7 +98,10 @@ class MyBot:
                                         (en): The state of the game.   
           """
           print(f"Current tick: {game_state.current_tick}")
-
+          print(self.walls)
+          # Get new position
+          new_pos = self.find_player_coordinates(game_state.players, self.name)
+          
           actions = []
 
           if not self.weapon_set:
@@ -98,9 +121,37 @@ class MyBot:
           if shoot_action:
                actions.append(shoot_action)
                actions.append(MoveAction(shoot_action.target_pos))
-               
-               
+          print("HERE")
+          if self.pos_player and new_pos.x == self.pos_player.x and new_pos.y == self.pos_player.y:
+               new_wall = None
+               if new_pos.x % 10 <= 1:
+                    new_wall = {"x": math.floor(new_pos.x), "y_bottom": math.floor(new_pos.y / 10) * 10, "y_top": math.ceil(new_pos.y / 10) * 10}
+               elif new_pos.x % 10 >= 9:
+                    new_wall = {"x": math.ceil(new_pos.x), "y_bottom": math.floor(new_pos.y / 10) * 10, "y_top": math.ceil(new_pos.y / 10) * 10}
+               elif new_pos.y % 10 <= 1:
+                    new_wall = {"y": math.floor(new_pos.x), "x_left": math.floor(new_pos.x / 10) * 10, "x_right": math.ceil(new_pos.x / 10) * 10}
+               elif new_pos.y % 10 >= 9:
+                    new_wall = {"y": math.ceil(new_pos.y), "x_left": math.floor(new_pos.x / 10) * 10, "x_right": math.ceil(new_pos.x / 10) * 10}    
 
+               if new_wall:
+                    wall_tuple = tuple(new_wall.items())
+                    if wall_tuple not in self.walls:
+                         self.walls.add(wall_tuple)
+                    self.dodge = True 
+                    self.temp_x, self.temp_y = self.generate_new_coords(new_pos.x, new_pos.y)
+
+          
+          self.pos_player = new_pos
+
+          if self.are_coordinates_close(self.temp_x, self.temp_y, new_pos.x, new_pos.y):
+               self.dodge = False
+
+
+          if self.dodge:
+               x_dest = self.temp_x
+               y_dest = self.temp_y
+               
+          actions.append(MoveAction((x_dest, y_dest)))
 
           """ actions = [
                MoveAction((x_dest, y_dest)),
@@ -182,4 +233,33 @@ class MyBot:
      """ utils """
      def calculate_distance(self, pos1: Point, pos2: Point) -> float:
         return math.sqrt((pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2)
+     
+     def generate_new_coords(self, old_x, old_y, delta=10):
+          new_x = old_x + random.uniform(-delta, delta)
+          new_y = old_y + random.uniform(-delta, delta)
+          while self.is_wall_in_between(old_x, old_y, new_x, new_y):
+               new_x = old_x + random.uniform(-delta, delta)
+               new_y = old_y + random.uniform(-delta, delta)
+          return new_x, new_y
+     
+     def are_coordinates_close(self, temp_x, temp_y, new_pos_x, new_pos_y, tolerance=1):
+          distance = math.sqrt((temp_x - new_pos_x) ** 2 + (temp_y - new_pos_y) ** 2)
+          return distance <= tolerance
+     
+     def is_wall_in_between(self, old_x, old_y, new_x, new_y):
+        for wall in self.walls:
+            wall_dict = dict(wall)
+            if 'x' in wall_dict:
+                wall_x = wall_dict['x']
+                y_bottom = wall_dict['y_bottom']
+                y_top = wall_dict['y_top']
+                if min(old_x, new_x) <= wall_x <= max(old_x, new_x) and min(old_y, new_y) <= y_top and max(old_y, new_y) >= y_bottom:
+                    return True
+            if 'y' in wall_dict:
+                wall_y = wall_dict['y']
+                x_left = wall_dict['x_left']
+                x_right = wall_dict['x_right']
+                if min(old_y, new_y) <= wall_y <= max(old_y, new_y) and min(old_x, new_x) <= x_right and max(old_x, new_x) >= x_left:
+                    return True
+        return False
         
