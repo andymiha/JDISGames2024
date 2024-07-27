@@ -25,6 +25,20 @@ class MyBot:
           self.dodge = False
           self.temp_x = None
           self.temp_y = None
+          # Define the border walls
+          border_walls = [
+               # Bottom border
+               {('y', 0), ('x_left', 0), ('x_right', 100)},
+               # Top border
+               {('y', 100), ('x_left', 0), ('x_right', 100)},
+               # Left border
+               {('x', 0), ('y_bottom', 0), ('y_top', 100)},
+               # Right border
+               {('x', 100), ('y_bottom', 0), ('y_top', 100)}
+          ]
+          # Add the border walls to the set
+          for wall in border_walls:
+               self.walls.add(tuple(wall))
 
 
      def on_tick(self, game_state: GameState) -> List[Union[MoveAction, SwitchWeaponAction, RotateBladeAction, ShootAction, SaveAction]]:
