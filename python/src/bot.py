@@ -18,10 +18,13 @@ class MyBot:
      __map_state: MapState
      name : str
      blade_rotation_angle: float
+     coin_count: int
+     weapon_set: bool
      
      def __init__(self):
           self.name = "CaBourré"
           self.blade_rotation_angle = 0.0
+          self.weapon_set = False
 
 
      def on_tick(self, game_state: GameState) -> List[Union[MoveAction, SwitchWeaponAction, RotateBladeAction, ShootAction, SaveAction]]:
@@ -77,6 +80,10 @@ class MyBot:
           print(f"Current tick: {game_state.current_tick}")
 
           actions = []
+
+          if not self.weapon_set:
+            actions.append(SwitchWeaponAction(PlayerWeapon.PlayerWeaponCanon))
+            self.weapon_set = True
         
           closest_coin = self.coin_finder(game_state, self.name)
           if closest_coin:
@@ -84,8 +91,12 @@ class MyBot:
                x_dest, y_dest = closest_coin.pos.x, closest_coin.pos.y
                actions.append(MoveAction((x_dest, y_dest)))
 
-          rotate_action = self.rotate_blade()
-          actions.append(rotate_action)
+          """ rotate_action = self.rotate_blade()
+          actions.append(rotate_action) """
+
+          shoot_action = self.pistol_aimer(game_state)
+          if shoot_action:
+               actions.append(shoot_action)
 
 
           """ actions = [
@@ -149,6 +160,21 @@ class MyBot:
         if self.blade_rotation_angle >= 2 * math.pi:
             self.blade_rotation_angle -= 2 * math.pi
         return RotateBladeAction(self.blade_rotation_angle)
+     
+     def pistol_aimer(self, game_state: GameState) -> Union[ShootAction, None]:
+        closest_enemy = None
+        dist_min = float('inf')
+        pos_self = self.find_player_coordinates(game_state.players, self.name)
+        for player in game_state.players:
+            if player.name != self.name:
+                dist = self.calculate_distance(pos_self, player.pos)
+                if dist < dist_min:
+                    dist_min = dist
+                    closest_enemy = player
+
+        if closest_enemy:
+            return ShootAction((closest_enemy.pos.x, closest_enemy.pos.y))
+        return None  
 
      """ utils """
      def calculate_distance(self, pos1: Point, pos2: Point) -> float:
