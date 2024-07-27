@@ -97,6 +97,9 @@ class MyBot:
           shoot_action = self.pistol_aimer(game_state)
           if shoot_action:
                actions.append(shoot_action)
+               actions.append(MoveAction(shoot_action.target_pos))
+               
+               
 
 
           """ actions = [
