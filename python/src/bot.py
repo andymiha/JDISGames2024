@@ -16,9 +16,11 @@ class MyBot:
      """
      __map_state: MapState
      name : str
+     blade_rotation_angle: float
      
      def __init__(self):
-          self.name = "Bourré"
+          self.name = "CaBourré"
+          self.blade_rotation_angle = 0.0
 
 
      def on_tick(self, game_state: GameState) -> List[Union[MoveAction, SwitchWeaponAction, RotateBladeAction, ShootAction, SaveAction]]:
@@ -72,20 +74,25 @@ class MyBot:
                                         (en): The state of the game.   
           """
           print(f"Current tick: {game_state.current_tick}")
+
+          actions = []
         
-          # Find the closest coin
           closest_coin = self.coin_finder(game_state, self.name)
           if closest_coin:
                print(f"Moving towards coin at position ({closest_coin.pos.x}, {closest_coin.pos.y})")
                x_dest, y_dest = closest_coin.pos.x, closest_coin.pos.y
+               actions.append(MoveAction((x_dest, y_dest)))
+
+          rotate_action = self.rotate_blade()
+          actions.append(rotate_action)
 
 
-          actions = [
+          """ actions = [
                MoveAction((x_dest, y_dest)),
                ShootAction((11.2222, 13.547)),
                SwitchWeaponAction(PlayerWeapon.PlayerWeaponBlade),
                SaveAction(b"Hello World"),
-          ]
+          ] """
                     
           return actions
     
@@ -116,7 +123,8 @@ class MyBot:
           """
           """ add a save call when the game is over to store our bytes to the server """
           pass
-     
+
+     """ action helpers """
      def find_player_coordinates(self, players, player_name):
           for player in players:
                if player.name == player_name:
@@ -133,7 +141,14 @@ class MyBot:
                     dist_min = dist
                     closest_coin = coin
           return closest_coin
+     
+     def rotate_blade(self) -> RotateBladeAction:
+        self.blade_rotation_angle += math.pi / 16 
+        if self.blade_rotation_angle >= 2 * math.pi:
+            self.blade_rotation_angle -= 2 * math.pi
+        return RotateBladeAction(self.blade_rotation_angle)
 
+     """ utils """
      def calculate_distance(self, pos1: Point, pos2: Point) -> float:
         return math.sqrt((pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2)
         
