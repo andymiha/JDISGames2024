@@ -1,5 +1,6 @@
 from typing import List, Union
 import math
+import json
 from core.action import MoveAction, ShootAction, RotateBladeAction, SwitchWeaponAction, SaveAction
 from core.consts import Consts
 from core.game_state import GameState, PlayerWeapon, Point
@@ -122,7 +123,8 @@ class MyBot:
                at the end of the game.
           """
           """ add a save call when the game is over to store our bytes to the server """
-          pass
+          save_data = json.dumps({'coin_count': self.coin_count}).encode('utf-8')
+          return [SaveAction(save_data)]
 
      """ action helpers """
      def find_player_coordinates(self, players, player_name):
