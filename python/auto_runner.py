@@ -1,11 +1,10 @@
 import subprocess
 import time
 
-# Command to be monitored and restarted
 command = ["python", "run_bot.py", "-r", "-t", "f6abe600-faa8-441e-b0aa-41045dcc47bf"]
 
 def is_process_running(cmd):
-    """Check if a process with the specified command is running."""
+    """Checking if the bot is running"""
     try:
         result = subprocess.run(['ps', 'aux'], capture_output=True, text=True)
         process_list = result.stdout
@@ -16,7 +15,7 @@ def is_process_running(cmd):
         return False
 
 def run_command(cmd):
-    """Run the specified command and return the process object."""
+    """Runs the bot """
     return subprocess.Popen(cmd)
 
 def main():

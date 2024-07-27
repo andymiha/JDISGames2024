@@ -29,22 +29,18 @@ class MyBot:
           self.dodge = False
           self.temp_x = None
           self.temp_y = None
-          # Define the border walls
-          border_walls = [
-               # Bottom border
-               {('y', 0), ('x_left', 0), ('x_right', 100)},
-               # Top border
-               {('y', 100), ('x_left', 0), ('x_right', 100)},
-               # Left border
-               {('x', 0), ('y_bottom', 0), ('y_top', 100)},
-               # Right border
-               {('x', 100), ('y_bottom', 0), ('y_top', 100)}
-          ]
-          # Add the border walls to the set
-          for wall in border_walls:
-               self.walls.add(tuple(wall))
           self.blade_rotation_angle = 0.0
           self.weapon_set = False
+          border_walls = [
+               # Bot, Top, Left, Right
+               {('y', 0), ('x_left', 0), ('x_right', 100)},
+               {('y', 100), ('x_left', 0), ('x_right', 100)},
+               {('x', 0), ('y_bottom', 0), ('y_top', 100)},
+               {('x', 100), ('y_bottom', 0), ('y_top', 100)}
+          ]
+          # Adding walls to set
+          for wall in border_walls:
+               self.walls.add(tuple(wall))
 
 
      def on_tick(self, game_state: GameState) -> List[Union[MoveAction, SwitchWeaponAction, RotateBladeAction, ShootAction, SaveAction]]:
@@ -97,23 +93,52 @@ class MyBot:
                game_state (GameState): (fr): L'état de la partie.
                                         (en): The state of the game.   
           """
+
+          """ ----------------------------------------------------------------------------------------- """
           print(f"Current tick: {game_state.current_tick}")
+
+          actions = []
+
           print(self.walls)
+
           # Get new position
           new_pos = self.find_player_coordinates(game_state.players, self.name)
           
-          actions = []
-
-          print(self.weapon_set)
+          # Switch weapon to canon
           if not self.weapon_set:
             actions.append(SwitchWeaponAction(PlayerWeapon.PlayerWeaponCanon))
             self.weapon_set = True
-        
 
+          """ # Determine if any player is within the blade's range
+          in_blade_range = False
+          for player in game_state.players:
+               if player.name != self.name:
+                    dist = self.calculate_distance(pos_self, player.pos)
+                    if dist <= 2.0:
+                         in_blade_range = True
+                         break
+
+          # If in blade range and not using the blade, switch to it
+          if in_blade_range:
+               if not self.weapon_set or not self.current_weapon == PlayerWeapon.PlayerWeaponBlade:
+                    actions.append(SwitchWeaponAction(PlayerWeapon.PlayerWeaponBlade))
+                    self.weapon_set = True
+                    self.current_weapon = PlayerWeapon.PlayerWeaponBlade
+
+               # Rotate the blade if using it
+               actions.append(self.rotate_blade())
+          else:
+               # If not in range, check if we should switch back to the gun
+               if self.weapon_set and self.current_weapon == PlayerWeapon.PlayerWeaponBlade:
+                    actions.append(SwitchWeaponAction(PlayerWeapon.PlayerWeaponCanon))
+                    self.weapon_set = True
+                    self.current_weapon = PlayerWeapon.PlayerWeaponCanon """
+        
           closest_coin = self.coin_finder(game_state, self.name)
           if closest_coin:
                print(f"Moving towards coin at position ({closest_coin.pos.x}, {closest_coin.pos.y})")
                x_dest, y_dest = closest_coin.pos.x, closest_coin.pos.y
+               actions.append(MoveAction((x_dest, y_dest)))
 
           """ rotate_action = self.rotate_blade()
           actions.append(rotate_action) """
@@ -121,7 +146,8 @@ class MyBot:
           shoot_action = self.pistol_aimer(game_state)
           if shoot_action:
                actions.append(shoot_action)
-               # actions.append(MoveAction(shoot_action.target_pos))
+               actions.append(MoveAction(shoot_action.target_pos))
+
           if self.pos_player and new_pos.x == self.pos_player.x and new_pos.y == self.pos_player.y:
                new_wall = None
                if new_pos.x % 10 <= 1:
@@ -142,7 +168,6 @@ class MyBot:
 
           
           self.pos_player = new_pos
-
 
           if self.are_coordinates_close(self.temp_x, self.temp_y, new_pos.x, new_pos.y):
                self.dodge = False
