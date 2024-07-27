@@ -23,7 +23,7 @@ class MyBot:
      weapon_set: bool
      
      def __init__(self):
-          self.name = "CaCaBourré"
+          self.name = "CaBourré"
           self.pos_player = None
           self.walls = set()
           self.dodge = False
@@ -108,6 +108,7 @@ class MyBot:
             actions.append(SwitchWeaponAction(PlayerWeapon.PlayerWeaponCanon))
             self.weapon_set = True
         
+
           closest_coin = self.coin_finder(game_state, self.name)
           if closest_coin:
                print(f"Moving towards coin at position ({closest_coin.pos.x}, {closest_coin.pos.y})")
@@ -121,7 +122,7 @@ class MyBot:
           if shoot_action:
                actions.append(shoot_action)
                actions.append(MoveAction(shoot_action.target_pos))
-          print("HERE")
+
           if self.pos_player and new_pos.x == self.pos_player.x and new_pos.y == self.pos_player.y:
                new_wall = None
                if new_pos.x % 10 <= 1:
@@ -142,6 +143,7 @@ class MyBot:
 
           
           self.pos_player = new_pos
+
 
           if self.are_coordinates_close(self.temp_x, self.temp_y, new_pos.x, new_pos.y):
                self.dodge = False
