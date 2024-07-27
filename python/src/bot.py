@@ -18,7 +18,7 @@ class MyBot:
      name : str
      
      def __init__(self):
-          self.name = "Magellan"
+          self.name = "Bourré"
 
 
      def on_tick(self, game_state: GameState) -> List[Union[MoveAction, SwitchWeaponAction, RotateBladeAction, ShootAction, SaveAction]]:
@@ -107,5 +107,11 @@ class MyBot:
           (en) This method is called once at the end of the game. You can define actions to be performed 
                at the end of the game.
           """
+          """ add a save call when the game is over to store our bytes to the server """
           pass
+     
+     def coin_finder(self, coins):
+          for coin in coins:
+               coin.position
+
         
